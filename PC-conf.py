@@ -4,44 +4,19 @@ from PyQt5.QtGui import QPalette, QColor, QPixmap
 from PyQt5.QtWidgets import QComboBox, QTableWidgetItem, QListWidgetItem, QDialog, QVBoxLayout, QLabel, QLineEdit, \
     QPushButton, QApplication, QWidget, QMessageBox
 
-COMPONENT_TABLES = ['motherboard', 'supply', 'cpu', 'gpu', 'cooler', 'ram', 'hdd', 'frame']
-COMPONENT_TABLES_RU = ['Материнская плата', 'Блок питания', 'Процессор', 'Видеокарта', 'Кулер', 'Оперативная память', 'Жесткий диск', 'Корпус']
+from TableBuilder import TableBuilder
+from UiComponents import InputDialog
+from database import DatabaseConnection
+from config import *
 
-class InputDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
 
-        self.input_label = QLabel("Введите название конфигурации:")
-        self.input_text = QLineEdit()
-        self.apply_button = QPushButton("Применить")
-        self.apply_button.clicked.connect(self.accept)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.input_label)
-        layout.addWidget(self.input_text)
-        layout.addWidget(self.apply_button)
-
-        self.setLayout(layout)
-        self.setWindowTitle("")
-
-    def get_input_text(self):
-        return self.input_text.text()
 class Ui_MainWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-
-        # Установка соединения с базой данных
-        self.connection = psycopg2.connect(
-            host="127.0.0.1",
-            user="postgres",
-            password="12345",
-            database="PCBuilder"
-        )
-
+        self.db = DatabaseConnection(**DB_CONFIG)
 
     def open_dialog(self):
-        parent_widget = QApplication.activeWindow()
         dialog = InputDialog(self)
         result = dialog.exec_()
 
@@ -50,7 +25,9 @@ class Ui_MainWindow(QWidget):
             print(f"Entered value: {value}")
             return value
 
-
+    def initialize_db(self):
+        table_builder = TableBuilder(self.db)
+        table_builder.create_tables()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -528,7 +505,11 @@ class Ui_MainWindow(QWidget):
                 msg.setInformativeText("Выберите совместимый тип памяти для материнской платы и оперативной памяти.")
                 msg.setStandardButtons(QMessageBox.Ok)
                 msg.exec_()
-        if len(self.comboBox_10.currentText()) > 0 and len(self.comboBox_11.currentText()) > 0 and len(self.comboBox_12.currentText()) > 0 and len(self.comboBox_14.currentText()) and len(self.comboBox_13.currentText()):
+        if (len(self.comboBox_10.currentText()) > 0
+                and len(self.comboBox_11.currentText()) > 0
+                and len(self.comboBox_12.currentText()) > 0
+                and len(self.comboBox_14.currentText())
+                and len(self.comboBox_13.currentText())):
             try:
                 compatible_power = power_supply <= cpu_power_use + gpu_power_use + ram_power_use + cooler_power_use
                 if not compatible_power:
@@ -878,7 +859,8 @@ class Ui_MainWindow(QWidget):
                         if not all([name, form, soket, type_member, interface]):
                             raise ValueError("Не все поля заполнены")
 
-                        query = "INSERT INTO motherboard (name, price, form, soket, type_member, interface) VALUES (%s, %s, %s, %s, %s, %s)"
+                        query = ("INSERT INTO motherboard (name, price, form, soket, type_member, interface)"
+                                 " VALUES (%s, %s, %s, %s, %s, %s)")
                         values = (name, price, form, soket, type_member, interface)
 
                         with self.connection.cursor() as cursor:
@@ -1084,29 +1066,37 @@ class Ui_MainWindow(QWidget):
 
             if result:
                 if table_name == "motherboard":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, форма:{result[3]}, сокет:{result[4]}, тип памяти:{result[5]}, интерфейсы:{result[6]}"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, форма:{result[3]},"
+                                       f" сокет:{result[4]}, тип памяти:{result[5]}, интерфейсы:{result[6]}")
                     print(result)
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "supply":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, мощность:{result[3]}, тип:{result[4]}"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, мощность:{result[3]},"
+                                       f" тип:{result[4]}")
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "ram":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, частота:{result[3]:.2f}, тип:{result[4]}, потребление энергии:{result[5]}"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, частота:{result[3]:.2f},"
+                                       f" тип:{result[4]}, потребление энергии:{result[5]}")
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "hdd":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, объем:{result[3]} ГБ, запись:{result[4]} MB/s, чтение:{result[5]} MB/s"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, объем:{result[3]} ГБ,"
+                                       f" запись:{result[4]} MB/s, чтение:{result[5]} MB/s")
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "gpu":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, частота:{result[3]:.1f} ГГц, сокет:{result[4]}, потребление энергии:{result[5]} Вт"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f},"
+                                       f" частота:{result[3]:.1f} ГГц, сокет:{result[4]},"
+                                       f" потребление энергии:{result[5]} Вт")
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "frame":
                     characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, форма:{result[3]}"
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "cpu":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, сокет:{result[3]}, частота:{result[4]:.1f} ГГц, потребление энергии:{result[5]} Вт"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, сокет:{result[3]},"
+                                       f" частота:{result[4]:.1f} ГГц, потребление энергии:{result[5]} Вт")
                     self.label_characteristics.setText(characteristics)
                 elif table_name == "cooler":
-                    characteristics = f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, скорость:{result[3]}, потребление энергии:{result[4]}"
+                    characteristics = (f"Выбранный компонент {result[1]}, цена:{result[2]:.2f}, скорость:{result[3]},"
+                                       f" потребление энергии:{result[4]}")
                     self.label_characteristics.setText(characteristics)
             else:
                 self.label_characteristics.setText("Компонент не найден")
