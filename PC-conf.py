@@ -15,6 +15,8 @@ class Ui_MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.db = DatabaseConnection(**DB_CONFIG)
+        self.connection = self.db.connection
+        self.initialize_db()
 
     def open_dialog(self):
         dialog = InputDialog(self)
@@ -310,7 +312,6 @@ class Ui_MainWindow(QWidget):
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-
         self.load_all_configurations() # загрузка предыдущих конфигураций
 
         self.last_clicked_button = None
@@ -392,14 +393,14 @@ class Ui_MainWindow(QWidget):
         self.cooler_label = QLabel(self.create_conf)
         self.ram_label = QLabel(self.create_conf)
 
-        self.supply_label.setPixmap(QPixmap("pc/Блок_питания.png"))
-        self.gpu_label.setPixmap(QPixmap("pc/Видео_карта.png"))
-        self.hdd_label.setPixmap(QPixmap("pc/Жесткий диск.png"))
-        self.frame_label.setPixmap(QPixmap("pc/Корпус.png"))
-        self.cooler_label.setPixmap(QPixmap("pc/Кулер.png"))
-        self.motherboard_label.setPixmap(QPixmap("pc/материнка.png"))
-        self.ram_label.setPixmap(QPixmap("pc/Оператива.png"))
-        self.cpu_label.setPixmap(QPixmap("pc/Проц.png"))
+        self.supply_label.setPixmap(QPixmap("sprites/Блок_питания.png"))
+        self.gpu_label.setPixmap(QPixmap("sprites/Видео_карта.png"))
+        self.hdd_label.setPixmap(QPixmap("sprites/Жесткий диск.png"))
+        self.frame_label.setPixmap(QPixmap("sprites/Корпус.png"))
+        self.cooler_label.setPixmap(QPixmap("sprites/Кулер.png"))
+        self.motherboard_label.setPixmap(QPixmap("sprites/материнка.png"))
+        self.ram_label.setPixmap(QPixmap("sprites/Оператива.png"))
+        self.cpu_label.setPixmap(QPixmap("sprites/Проц.png"))
 
         for label in [self.supply_label, self.gpu_label, self.hdd_label, self.frame_label, self.cooler_label,
                       self.motherboard_label, self.ram_label, self.cpu_label]:
@@ -594,10 +595,10 @@ class Ui_MainWindow(QWidget):
 
                     elif self.current_table_name == "gpu":
                         update_query = """
-                                                UPDATE gpu
-                                                SET name = %s, price = %s, frequency = %s, soket = %s, power_use = %s
-                                                WHERE name = %s
-                                                """
+                                        UPDATE gpu
+                                        SET name = %s, price = %s, frequency = %s, soket = %s, power_use = %s
+                                        WHERE name = %s
+                                        """
                         # Получаем значения из второго столбца tableWidget_2
                         name = self.tableWidget_2.item(0, 1).text()
                         price = self.tableWidget_2.item(1, 1).text()
@@ -610,10 +611,10 @@ class Ui_MainWindow(QWidget):
 
                     elif self.current_table_name == "frame":
                         update_query = """
-                                                UPDATE frame
-                                                SET name = %s, price = %s, form = %s
-                                                WHERE name = %s
-                                                """
+                                        UPDATE frame
+                                        SET name = %s, price = %s, form = %s
+                                        WHERE name = %s
+                                        """
                         # Получаем значения из второго столбца tableWidget_2
                         name = self.tableWidget_2.item(0, 1).text()
                         price = self.tableWidget_2.item(1, 1).text()
@@ -624,10 +625,10 @@ class Ui_MainWindow(QWidget):
 
                     elif self.current_table_name == "cpu":
                         update_query = """
-                                               UPDATE cpu
-                                               SET name = %s, price = %s, soket = %s, frequency = %s, power_use = %s
-                                               WHERE name = %s
-                                               """
+                                       UPDATE cpu
+                                       SET name = %s, price = %s, soket = %s, frequency = %s, power_use = %s
+                                       WHERE name = %s
+                                       """
                         # Получаем значения из второго столбца tableWidget_2
                         name = self.tableWidget_2.item(0, 1).text()
                         price = self.tableWidget_2.item(1, 1).text()
@@ -640,10 +641,10 @@ class Ui_MainWindow(QWidget):
 
                     elif self.current_table_name == "cooler":
                         update_query = """
-                                                UPDATE cooler
-                                                SET name = %s, price = %s, speed = %s, power_use = %s
-                                                WHERE name = %s
-                                                """
+                                        UPDATE cooler
+                                        SET name = %s, price = %s, speed = %s, power_use = %s
+                                        WHERE name = %s
+                                        """
                         # Получаем значения из второго столбца tableWidget_2
                         name = self.tableWidget_2.item(0, 1).text()
                         price = self.tableWidget_2.item(1, 1).text()
@@ -656,8 +657,6 @@ class Ui_MainWindow(QWidget):
                 self.connection.commit()
         except Exception as e:
                 print(f"Произошло исключение: {e}")
-
-
 
 
     def update_progress_bar(self):
@@ -838,216 +837,209 @@ class Ui_MainWindow(QWidget):
         selected_component = self.last_clicked_button
         print(selected_component)
 
-        with psycopg2.connect(
-                host="127.0.0.1",
-                user="postgres",
-                password="12345",
-                database="PCBuilder"
-        ) as connection:
-            # Создаем объект-курсор для выполнения SQL-запросов
-            with connection.cursor() as cursor:
+        with self.connection.cursor() as cursor:
 
-                if selected_component == "motherboard":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        form = self.tableWidget_2.item(2, 1).text()
-                        soket = self.tableWidget_2.item(3, 1).text()
-                        type_member = self.tableWidget_2.item(4, 1).text()
-                        interface = self.tableWidget_2.item(5, 1).text()
+            if selected_component == "motherboard":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    form = self.tableWidget_2.item(2, 1).text()
+                    soket = self.tableWidget_2.item(3, 1).text()
+                    type_member = self.tableWidget_2.item(4, 1).text()
+                    interface = self.tableWidget_2.item(5, 1).text()
 
-                        if not all([name, form, soket, type_member, interface]):
-                            raise ValueError("Не все поля заполнены")
+                    if not all([name, form, soket, type_member, interface]):
+                        raise ValueError("Не все поля заполнены")
 
-                        query = ("INSERT INTO motherboard (name, price, form, soket, type_member, interface)"
-                                 " VALUES (%s, %s, %s, %s, %s, %s)")
-                        values = (name, price, form, soket, type_member, interface)
+                    query = ("INSERT INTO motherboard (name, price, form, soket, type_member, interface)"
+                             " VALUES (%s, %s, %s, %s, %s, %s)")
+                    values = (name, price, form, soket, type_member, interface)
 
-                        with self.connection.cursor() as cursor:
-                            cursor.execute(query, values)
-                            self.connection.commit()
+                    with self.connection.cursor() as cursor:
+                        cursor.execute(query, values)
+                        self.connection.commit()
 
-                        self.comboBox_9.addItem(name)
-                        self.comboBox.addItem(name)
+                    self.comboBox_9.addItem(name)
+                    self.comboBox.addItem(name)
 
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
 
-                elif selected_component == "supply":
-                    try:
+            elif selected_component == "supply":
+                try:
 
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        power = self.tableWidget_2.item(2, 1).text()
-                        type = self.tableWidget_2.item(3, 1).text()
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    power = self.tableWidget_2.item(2, 1).text()
+                    type = self.tableWidget_2.item(3, 1).text()
 
-                        if not all([name, power, type]):
-                            raise ValueError("Не все поля заполнены")
+                    if not all([name, power, type]):
+                        raise ValueError("Не все поля заполнены")
 
-                        query = "INSERT INTO supply (name, price, power, type) VALUES (%s, %s, %s, %s)"
-                        value = (name, price, power, type)
-                        cursor.execute(query, value)
-                        connection.commit()
+                    query = "INSERT INTO supply (name, price, power, type) VALUES (%s, %s, %s, %s)"
+                    value = (name, price, power, type)
+                    cursor.execute(query, value)
+                    connection.commit()
 
-                        self.comboBox_10.addItem(name)
-                        self.comboBox_2.addItem(name)
-                        self.comboBox_10.setCurrentIndex(-1)
-                    except Exception as e:
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                    self.comboBox_10.addItem(name)
+                    self.comboBox_2.addItem(name)
+                    self.comboBox_10.setCurrentIndex(-1)
+                except Exception as e:
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
-                elif selected_component == "gpu":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        frequency = self.tableWidget_2.item(2, 1).text()
-                        soket = self.tableWidget_2.item(3, 1).text()
-                        power_use = self.tableWidget_2.item(4, 1).text()
+            elif selected_component == "gpu":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    frequency = self.tableWidget_2.item(2, 1).text()
+                    soket = self.tableWidget_2.item(3, 1).text()
+                    power_use = self.tableWidget_2.item(4, 1).text()
 
-                        if not all([name, frequency, soket, power_use]):
-                            raise ValueError("Не все поля заполнены")
+                    if not all([name, frequency, soket, power_use]):
+                        raise ValueError("Не все поля заполнены")
 
-                        query = "INSERT INTO gpu (name, price, frequency, soket, power_use) VALUES (%s, %s, %s, %s, %s)"
-                        value = (name, price, frequency, soket, power_use)
-                        cursor.execute(query, value)
-                        connection.commit()
+                    query = "INSERT INTO gpu (name, price, frequency, soket, power_use) VALUES (%s, %s, %s, %s, %s)"
+                    value = (name, price, frequency, soket, power_use)
+                    cursor.execute(query, value)
+                    connection.commit()
 
-                        self.comboBox_12.addItem(name)
-                        self.comboBox_4.addItem(name)
-                        self.comboBox_12.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
-
-
-                elif selected_component == "ram":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        frequency = self.tableWidget_2.item(2, 1).text()
-                        type_member = self.tableWidget_2.item(3, 1).text()
-                        power_use = self.tableWidget_2.item(4, 1).text()
-
-                        if not all([name, frequency, type_member, power_use]):
-                            raise ValueError("Не все поля заполнены")
-
-                        query = "INSERT INTO ram (name, price, frequency, type_member, power_use) VALUES (%s, %s, %s, %s, %s)"
-                        value = (name, price, frequency, type_member, power_use)
-                        cursor.execute(query, value)
-                        connection.commit()
-
-                        self.comboBox_14.addItem(name)
-                        self.comboBox_6.addItem(name)
-                        self.comboBox_14.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                    self.comboBox_12.addItem(name)
+                    self.comboBox_4.addItem(name)
+                    self.comboBox_12.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
 
-                elif selected_component == "cpu":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        soket = self.tableWidget_2.item(2, 1).text()
-                        frequency = self.tableWidget_2.item(3, 1).text()
-                        power_use = self.tableWidget_2.item(4, 1).text()
+            elif selected_component == "ram":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    frequency = self.tableWidget_2.item(2, 1).text()
+                    type_member = self.tableWidget_2.item(3, 1).text()
+                    power_use = self.tableWidget_2.item(4, 1).text()
 
-                        if not all([name, soket, frequency, power_use]):
-                            raise ValueError("Не все поля заполнены")
+                    if not all([name, frequency, type_member, power_use]):
+                        raise ValueError("Не все поля заполнены")
 
-                        query = "INSERT INTO cpu (name, price, soket, frequency, power_use) VALUES (%s, %s, %s, %s, %s)"
-                        value = (name, price, soket, frequency, power_use)
-                        cursor.execute(query, value)
-                        connection.commit()
+                    query = "INSERT INTO ram (name, price, frequency, type_member, power_use) VALUES (%s, %s, %s, %s, %s)"
+                    value = (name, price, frequency, type_member, power_use)
+                    cursor.execute(query, value)
+                    connection.commit()
 
-                        self.comboBox_11.addItem(name)
-                        self.comboBox_3.addItem(name)
-                        self.comboBox_11.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
-
-                elif selected_component == "cooler":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        speed = self.tableWidget_2.item(2, 1).text()
-                        power_use = self.tableWidget_2.item(3, 1).text()
-
-                        if not all([name, speed, power_use]):
-                            raise ValueError("Не все поля заполнены")
-
-                        query = "INSERT INTO cooler (name, price, speed, power_use) VALUES (%s, %s, %s, %s)"
-                        value = (name, price, speed, power_use)
-                        cursor.execute(query, value)
-                        connection.commit()
-
-                        self.comboBox_13.addItem(name)
-                        self.comboBox_5.addItem(name)
-                        self.comboBox_13.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                    self.comboBox_14.addItem(name)
+                    self.comboBox_6.addItem(name)
+                    self.comboBox_14.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
 
-                elif selected_component == "frame":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        form = self.tableWidget_2.item(2, 1).text()
+            elif selected_component == "cpu":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    soket = self.tableWidget_2.item(2, 1).text()
+                    frequency = self.tableWidget_2.item(3, 1).text()
+                    power_use = self.tableWidget_2.item(4, 1).text()
 
-                        if not all([name, form]):
-                            raise ValueError("Не все поля заполнены")
+                    if not all([name, soket, frequency, power_use]):
+                        raise ValueError("Не все поля заполнены")
 
-                        query = "INSERT INTO frame (name, price, form) VALUES (%s, %s, %s)"
-                        value = (name, price, form)
-                        cursor.execute(query, value)
-                        connection.commit()
+                    query = "INSERT INTO cpu (name, price, soket, frequency, power_use) VALUES (%s, %s, %s, %s, %s)"
+                    value = (name, price, soket, frequency, power_use)
+                    cursor.execute(query, value)
+                    connection.commit()
 
-                        self.comboBox_16.addItem(name)
-                        self.comboBox_8.addItem(name)
-                        self.comboBox_16.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                    self.comboBox_11.addItem(name)
+                    self.comboBox_3.addItem(name)
+                    self.comboBox_11.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
+            elif selected_component == "cooler":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    speed = self.tableWidget_2.item(2, 1).text()
+                    power_use = self.tableWidget_2.item(3, 1).text()
 
-                elif selected_component == "hdd":
-                    try:
-                        name = self.tableWidget_2.item(0, 1).text()
-                        price = self.tableWidget_2.item(1, 1).text()
-                        capacity = self.tableWidget_2.item(2, 1).text()
-                        recording = self.tableWidget_2.item(3, 1).text()
-                        reading = self.tableWidget_2.item(4, 1).text()
+                    if not all([name, speed, power_use]):
+                        raise ValueError("Не все поля заполнены")
 
-                        if not all([name, capacity,recording,reading]):
-                            raise ValueError("Не все поля заполнены")
+                    query = "INSERT INTO cooler (name, price, speed, power_use) VALUES (%s, %s, %s, %s)"
+                    value = (name, price, speed, power_use)
+                    cursor.execute(query, value)
+                    connection.commit()
 
-                        query = "INSERT INTO hdd (name, price, capacity, recording, reading) VALUES (%s, %s, %s, %s, %s)"
-                        value = (name, price, capacity, recording, reading)
-                        cursor.execute(query, value)
-                        connection.commit()
-
-                        self.comboBox_15.addItem(name)
-                        self.comboBox_7.addItem(name)
-                        self.comboBox_15.setCurrentIndex(-1)
-                    except Exception as e:
-                        # Выводим окно ошибки
-                        error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
-                        QMessageBox.critical(self, "Ошибка", error_message)
+                    self.comboBox_13.addItem(name)
+                    self.comboBox_5.addItem(name)
+                    self.comboBox_13.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
 
 
-                for row in range(self.tableWidget_2.rowCount()):
-                    item = QtWidgets.QTableWidgetItem("")
-                    self.tableWidget_2.setItem(row, 1, item)
+            elif selected_component == "frame":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    form = self.tableWidget_2.item(2, 1).text()
+
+                    if not all([name, form]):
+                        raise ValueError("Не все поля заполнены")
+
+                    query = "INSERT INTO frame (name, price, form) VALUES (%s, %s, %s)"
+                    value = (name, price, form)
+                    cursor.execute(query, value)
+                    connection.commit()
+
+                    self.comboBox_16.addItem(name)
+                    self.comboBox_8.addItem(name)
+                    self.comboBox_16.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
+
+
+            elif selected_component == "hdd":
+                try:
+                    name = self.tableWidget_2.item(0, 1).text()
+                    price = self.tableWidget_2.item(1, 1).text()
+                    capacity = self.tableWidget_2.item(2, 1).text()
+                    recording = self.tableWidget_2.item(3, 1).text()
+                    reading = self.tableWidget_2.item(4, 1).text()
+
+                    if not all([name, capacity,recording,reading]):
+                        raise ValueError("Не все поля заполнены")
+
+                    query = "INSERT INTO hdd (name, price, capacity, recording, reading) VALUES (%s, %s, %s, %s, %s)"
+                    value = (name, price, capacity, recording, reading)
+                    cursor.execute(query, value)
+                    connection.commit()
+
+                    self.comboBox_15.addItem(name)
+                    self.comboBox_7.addItem(name)
+                    self.comboBox_15.setCurrentIndex(-1)
+                except Exception as e:
+                    # Выводим окно ошибки
+                    error_message = f"Ошибка при добавлении материнской платы: {str(e)}"
+                    QMessageBox.critical(self, "Ошибка", error_message)
+
+
+            for row in range(self.tableWidget_2.rowCount()):
+                item = QtWidgets.QTableWidgetItem("")
+                self.tableWidget_2.setItem(row, 1, item)
 
     def populate_combobox(self, combobox, table_name):
         # Запрос к базе данных для получения данных
@@ -1362,7 +1354,7 @@ class Ui_MainWindow(QWidget):
 
             # Создаем запись в таблице configuration
             cursor.execute("""
-                INSERT INTO configuration (confid, motherboard, supply, cpu, gpu, cooler, ram, hdd, frame, named)
+                INSERT INTO configuration (conf_id, motherboard, supply, cpu, gpu, cooler, ram, hdd, frame, named)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 max_confid+1,

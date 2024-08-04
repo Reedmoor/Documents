@@ -83,6 +83,21 @@ class TableBuilder:
                 recording INT NOT NULL,
                 reading INT NOT NULL
             )
+            ''',
+            '''
+            CREATE TABLE IF NOT EXISTS configuration(
+                conf_id SERIAL PRIMARY KEY,
+                motherboard_id INT REFERENCES motherboard(id),
+                supply_id INT REFERENCES supply(id),
+                cpu_id INT REFERENCES cpu(id),
+                gpu_id INT REFERENCES gpu(id),
+                cooler_id INT REFERENCES cooler(id),
+                ram_id INT REFERENCES ram(id),
+                hdd_id INT REFERENCES hdd(id),
+                frame_id INT REFERENCES frame(id),
+                named VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             '''
         ]
 
