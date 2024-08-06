@@ -1,16 +1,19 @@
+import sys
+
 import psycopg2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPalette, QColor, QPixmap
 from PyQt5.QtWidgets import QComboBox, QTableWidgetItem, QListWidgetItem, QDialog, QVBoxLayout, QLabel, QLineEdit, \
-    QPushButton, QApplication, QWidget, QMessageBox
+    QPushButton, QApplication, QWidget, QMessageBox, QMenuBar, QAction, QMainWindow
 
 from TableBuilder import TableBuilder
 from UiComponents import InputDialog
 from database import DatabaseConnection
 from config import *
+from themes import *
 
 
-class Ui_MainWindow(QWidget):
+class Ui_MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -34,29 +37,54 @@ class Ui_MainWindow(QWidget):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(1200,800)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+
+        self.menu_bar = self.menuBar()
+        self.theme_menu = self.menu_bar.addMenu("Themes")
+
+        # Добавляем действия для тем
+        self.dark_theme_action = QAction("Dark Theme", self)
+        self.dark_theme_action.triggered.connect(lambda: apply_theme(app, "dark"))
+        self.theme_menu.addAction(self.dark_theme_action)
+
+        self.windows_xp_theme_action = QAction("Windows XP Theme", self)
+        self.windows_xp_theme_action.triggered.connect(lambda: apply_theme(app, "windows_xp"))
+        self.theme_menu.addAction(self.windows_xp_theme_action)
+
+        self.centralwidget = QWidget(self)
+        self.setCentralWidget(self.centralwidget)
+
         self.horizontalLayout_10 = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout_10.setObjectName("horizontalLayout_10")
+
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName("tabWidget")
-        self.create_conf = QtWidgets.QWidget()
+
+        self.create_conf = QWidget()
         self.create_conf.setObjectName("create_conf")
+
         self.progressBar = QtWidgets.QProgressBar(self.create_conf)
         self.progressBar.setGeometry(QtCore.QRect(847, 30, 261, 23))
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
+
         self.progressBar_2 = QtWidgets.QProgressBar(self.create_conf)
         self.progressBar_2.setGeometry(QtCore.QRect(847, 70, 261, 23))
         self.progressBar_2.setProperty("value", 0)
         self.progressBar_2.setObjectName("progressBar_2")
+
         self.label_required = QLabel("Обязательные компоненты", self.create_conf)
         self.label_required.move(577, 30)
+
         self.label_optional = QLabel("Необязательные компоненты", self.create_conf)
         self.label_optional.move(557, 70)
+
         self.layoutWidget = QtWidgets.QWidget(self.create_conf)
         self.layoutWidget.setGeometry(QtCore.QRect(15, 109, 431, 591))
         self.layoutWidget.setObjectName("layoutWidget")
+
+        self.tabWidget.addTab(self.create_conf, "Create Configuration")
+        self.horizontalLayout_10.addWidget(self.tabWidget)
+
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.layoutWidget)
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -148,9 +176,9 @@ class Ui_MainWindow(QWidget):
         self.label_characteristics.setObjectName("label_characteristics")
         self.label_characteristics.setWordWrap(True)
         self.tabWidget.addTab(self.create_conf, "")
-        self.ADD_compl = QtWidgets.QWidget()
-        self.ADD_compl.setObjectName("ADD_compl")
-        self.layoutWidget1 = QtWidgets.QWidget(self.ADD_compl)
+        self.tab_add_components = QtWidgets.QWidget()
+        self.tab_add_components.setObjectName("tab_add_components")
+        self.layoutWidget1 = QtWidgets.QWidget(self.tab_add_components)
         self.layoutWidget1.setGeometry(QtCore.QRect(250, 670, 321, 41))
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.layoutWidget1)
@@ -165,7 +193,7 @@ class Ui_MainWindow(QWidget):
         self.Button_delete = QtWidgets.QPushButton(self.layoutWidget1)
         self.Button_delete.setObjectName("Button_delete")
         self.horizontalLayout.addWidget(self.Button_delete)
-        self.layoutWidget2 = QtWidgets.QWidget(self.ADD_compl)
+        self.layoutWidget2 = QtWidgets.QWidget(self.tab_add_components)
         self.layoutWidget2.setGeometry(QtCore.QRect(580, 0, 77, 691))
         self.layoutWidget2.setObjectName("layoutWidget2")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget2)
@@ -196,12 +224,12 @@ class Ui_MainWindow(QWidget):
         self.pushButton_addframe = QtWidgets.QPushButton(self.layoutWidget2)
         self.pushButton_addframe.setObjectName("pushButton_addframe")
         self.verticalLayout.addWidget(self.pushButton_addframe)
-        self.tableWidget_2 = QtWidgets.QTableWidget(self.ADD_compl)
+        self.tableWidget_2 = QtWidgets.QTableWidget(self.tab_add_components)
         self.tableWidget_2.setGeometry(QtCore.QRect(710, 80, 431, 561))
         self.tableWidget_2.setObjectName("tableWidget_2")
         self.tableWidget_2.setColumnCount(0)
         self.tableWidget_2.setRowCount(0)
-        self.layoutWidget3 = QtWidgets.QWidget(self.ADD_compl)
+        self.layoutWidget3 = QtWidgets.QWidget(self.tab_add_components)
         self.layoutWidget3.setGeometry(QtCore.QRect(20, 30, 551, 631))
         self.layoutWidget3.setObjectName("layoutWidget3")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layoutWidget3)
@@ -287,7 +315,7 @@ class Ui_MainWindow(QWidget):
         self.comboBox_8.setObjectName("comboBox_8")
         self.horizontalLayout_9.addWidget(self.comboBox_8)
         self.verticalLayout_2.addLayout(self.horizontalLayout_9)
-        self.tabWidget.addTab(self.ADD_compl, "")
+        self.tabWidget.addTab(self.tab_add_components, "")
         self.tab_ready_conf = QtWidgets.QWidget()
         self.tab_ready_conf.setObjectName("tab_ready_conf")
         self.listWidget = QtWidgets.QListWidget(self.tab_ready_conf)
@@ -882,7 +910,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO supply (name, price, power, type) VALUES (%s, %s, %s, %s)"
                     value = (name, price, power, type)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_10.addItem(name)
                     self.comboBox_2.addItem(name)
@@ -905,7 +933,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO gpu (name, price, frequency, soket, power_use) VALUES (%s, %s, %s, %s, %s)"
                     value = (name, price, frequency, soket, power_use)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_12.addItem(name)
                     self.comboBox_4.addItem(name)
@@ -930,7 +958,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO ram (name, price, frequency, type_member, power_use) VALUES (%s, %s, %s, %s, %s)"
                     value = (name, price, frequency, type_member, power_use)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_14.addItem(name)
                     self.comboBox_6.addItem(name)
@@ -955,7 +983,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO cpu (name, price, soket, frequency, power_use) VALUES (%s, %s, %s, %s, %s)"
                     value = (name, price, soket, frequency, power_use)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_11.addItem(name)
                     self.comboBox_3.addItem(name)
@@ -978,7 +1006,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO cooler (name, price, speed, power_use) VALUES (%s, %s, %s, %s)"
                     value = (name, price, speed, power_use)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_13.addItem(name)
                     self.comboBox_5.addItem(name)
@@ -1001,7 +1029,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO frame (name, price, form) VALUES (%s, %s, %s)"
                     value = (name, price, form)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_16.addItem(name)
                     self.comboBox_8.addItem(name)
@@ -1026,7 +1054,7 @@ class Ui_MainWindow(QWidget):
                     query = "INSERT INTO hdd (name, price, capacity, recording, reading) VALUES (%s, %s, %s, %s, %s)"
                     value = (name, price, capacity, recording, reading)
                     cursor.execute(query, value)
-                    connection.commit()
+                    self.connection.commit()
 
                     self.comboBox_15.addItem(name)
                     self.comboBox_7.addItem(name)
@@ -1461,7 +1489,7 @@ class Ui_MainWindow(QWidget):
 
             row = self.listWidget.row(selected_item)
             self.listWidget.takeItem(row)
-
+    
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -1476,7 +1504,7 @@ class Ui_MainWindow(QWidget):
         self.label_HDD_2.setText(_translate("MainWindow", "Жесткий диск"))
         self.label_frame_2.setText(_translate("MainWindow", "Корпус"))
         self.pushButton_save.setText(_translate("MainWindow", "сохранить конфигурацию"))
-        self.label_characteristics.setText(_translate("MainWindow", "характеристеки"))
+        self.label_characteristics.setText(_translate("MainWindow", "характеристики"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.create_conf),
                                   _translate("MainWindow", "Создание конфигурации"))
         self.Button_add.setText(_translate("MainWindow", "Добавить"))
@@ -1499,21 +1527,21 @@ class Ui_MainWindow(QWidget):
         self.label_ram.setText(_translate("MainWindow", "Оперативная память"))
         self.label_HDD.setText(_translate("MainWindow", "Жесткий диск"))
         self.label_frame.setText(_translate("MainWindow", "Корпус"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.ADD_compl),
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_add_components),
                                   _translate("MainWindow", "Добавить компонент"))
         self.pushButton_change.setText(_translate("MainWindow", "Изменить"))
         self.pushButton_delete.setText(_translate("MainWindow", "Удалить"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_ready_conf),
                                   _translate("MainWindow", "Готовые конфигурации"))
-
-
-if __name__ == "__main__":
-    import sys
-
+def main():
+    global app
     app = QtWidgets.QApplication(sys.argv)
+    apply_theme(app, "dark")
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
 
+if __name__ == "__main__":
+    main()
